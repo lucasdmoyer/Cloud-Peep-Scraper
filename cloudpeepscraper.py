@@ -4,15 +4,40 @@ import pickle
 import csv
 from selenium import webdriver
 
-names = ['ashtonwright', 'petertrapasso', 'scaleup']
+#names = ['ashtonwright', 'petertrapasso', 'scaleup']
+alphabets = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ']
+from itertools import product 
+keywords = [''.join(i) for i in product(alphabets, repeat = 16)]
+print keywords
+
+thefile = open('test.txt', 'w')
+for item in keywords:
+  thefile.write("%s\n" % item)
+
+'''
+thelist = open('test.txt', 'r')
+for item in thelist:
+	print item
+'''
 
 #builds csv file of all US and Canada cities in place, link
 def buildplacesdic():
     with open('cloudpeeps.csv', 'w') as csvfile:
         fieldnames = ['Image', 'Name', 'Location', 'Linkedin', 'Facebook', 'Twitter', 'Instagram', 'Instagram Followers', "Instagram Following", "Instagram username"]
         write = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        for entry in names:
-        	print entry
+        for entry in keywords:
+        	info = getSearch(entry)
+        	Image = info[0]
+        	Name = info[1]
+        	Location = info[2]
+        	Linkedin = info[3]
+        	Facebook = info[4]
+        	Twitter = info[5]
+        	Instagram = info[6]
+        	Followers = info[7]
+        	Following = info[8]
+        	InstagramUserName = info[9]
+        	write.writerow({'Image':Image, 'Name':Name, 'Location':Location, 'Linkedin':Linkedin, 'Facebook':Facebook, 'Twitter':Twitter, 'Instagram':Instagram, 'Instagram Followers': Followers, 'Instagram Following':Following, "Instagram username" :InstagramUserName})
 
 def getSearch(user):
 	search_url = 'https://www.cloudpeeps.com/' + user
@@ -24,7 +49,7 @@ def getSearch(user):
 	#Get image
 	startOfImage = soup.text.index("https://s3.amazonaws")
 	endOfImage = soup.text[startOfImage:].index('make') + startOfImage - 3
-	Image =  soup.text[startOfImage:endOfImage]
+	Image =  "=URL(" + soup.text[startOfImage:endOfImage] + ",4,50,50)"
 
 	#Get Name
 	nameString = str(soup.find('h1'))
@@ -46,6 +71,10 @@ def getSearch(user):
 	startOfFacebook = soup.text.index("facebook")
 	endOfFacebook = soup.text[startOfFacebook:].index('"')
 	Facebook = soup.text[startOfFacebook-12:startOfFacebook+endOfFacebook]
+	print Facebook
+	if 'connect' in Facebook:
+		Facebook = "Facebook Not Provided"
+	print Facebook
 
 	#Get Twitter
 	startOfTwitter = soup.text.index("twitter")
@@ -61,18 +90,16 @@ def getSearch(user):
 		if (Instagram[len(Instagram)-1:] != '/'):
 			Instagram = Instagram + '/'
 	except ValueError:
-		Instagram = 'Not Provided'
+		Instagram = 'Instagram Not Provided'
 	#Get Insta username
-	print Instagram
 
 	InstaUser=''
 	try:
 		startOfUsername = Instagram.index("com") + 4
 		endOfUsername = Instagram[startOfUsername:].index('/')
 		InstaUser = Instagram[startOfUsername: startOfUsername+ endOfUsername]
-		print InstaUser
 	except ValueError:
-		InstaUser = 'Not Provided'
+		InstaUser = 'Instagram Username Not Provided'
 
 	#Get Instagram followers
 	driver = webdriver.PhantomJS(executable_path=r'C:\PhantomJs\bin\phantomjs.exe')
@@ -92,11 +119,11 @@ def getSearch(user):
 		endOfFollowed = htmltext[startOfFollowed:].index("}")
 		Followed = htmltext[startOfFollowed+24: startOfFollowed+endOfFollowed]
 	except ValueError:
-		Followers = 'Not Provided'
-		Followed = 'Not Provided'
+		Followers = 'Followers Not Provided'
+		Followed = 'Following Not Provided'
 	result = [Image, Name, Location, Linkedin, Facebook, Twitter, Instagram, Followers, Followed, InstaUser]
 	return result
 
 
 #print getSearch('ashtonwright')
-buildplacesdic()
+#buildplacesdic()
